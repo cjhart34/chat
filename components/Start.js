@@ -6,6 +6,10 @@ const backgroundColors = {
     purple: '#474056',
     grey: '#8A95A5',
     green: '#B9C6AE',
+    orange: '#F8B195',
+    red: '#F67280',
+    maroon: '#C06C84',
+    violet: '#6C5B7B'
 };
 
 export default class Start extends React.Component {
@@ -38,37 +42,37 @@ export default class Start extends React.Component {
                                 <TouchableOpacity
                                     style={[
                                         styles.color,
-                                        { backgroundColor: backgroundColors.black },
+                                        { backgroundColor: backgroundColors.orange },
                                     ]}
                                     onPress={() =>
-                                        this.setState({ color: backgroundColors.black })
+                                        this.setState({ color: backgroundColors.orange })
                                     }
                                 />
                                 <TouchableOpacity
                                     style={[
                                         styles.color,
-                                        { backgroundColor: backgroundColors.purple },
+                                        { backgroundColor: backgroundColors.red },
                                     ]}
                                     onPress={() =>
-                                        this.setState({ color: backgroundColors.purple })
+                                        this.setState({ color: backgroundColors.red })
                                     }
                                 />
                                 <TouchableOpacity
                                     style={[
                                         styles.color,
-                                        { backgroundColor: backgroundColors.grey },
+                                        { backgroundColor: backgroundColors.maroon },
                                     ]}
                                     onPress={() =>
-                                        this.setState({ color: backgroundColors.grey })
+                                        this.setState({ color: backgroundColors.maroon })
                                     }
                                 />
                                 <TouchableOpacity
                                     style={[
                                         styles.color,
-                                        { backgroundColor: backgroundColors.green },
+                                        { backgroundColor: backgroundColors.violet },
                                     ]}
                                     onPress={() =>
-                                        this.setState({ color: backgroundColors.green })
+                                        this.setState({ color: backgroundColors.violet })
                                     }
                                 />
                             </View>
