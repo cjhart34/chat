@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Platform, KeyboardAvoidingView } from 'react-native';
-import { getBottomSpace } from 'react-native-iphone-x-helper';
 import { GiftedChat, Bubble, InputToolbar } from 'react-native-gifted-chat';
 import 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -225,7 +224,6 @@ export default class Chat extends React.Component {
       <ActionSheetProvider>
         <View style={{ flex: 1, backgroundColor: color }}>
           <GiftedChat
-            // bottomOffset={getBottomSpace()}
             renderBubble={this.renderBubble.bind(this)}
             renderInputToolbar={this.renderInputToolbar.bind(this)}
             messages={this.state.messages}
