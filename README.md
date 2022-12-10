@@ -1,10 +1,12 @@
 # Chat App
 
+<img src=./assets/5.5.png>
+
 This is a native mobile app built using React Native that allows users to enter a chat room, then send messages, images, and their location.
 
 ## Objective
 
-To build a chat app for mobile devices using React Native. The app will provide users with a chat interface and options to share images and their location.
+To build a chat app for mobile devices using React Native. The app will provide users with a chat interface and options to share images and their location. The user will be able to view their cached messages via AsyncStorage.
 
 ## Key Features
 
@@ -18,3 +20,6 @@ To build a chat app for mobile devices using React Native. The app will provide 
 * React Native
 * Expo
 * Android Emulator
+* iOS Emulator
+* Google Firebase
+* React Native Gifted Chat

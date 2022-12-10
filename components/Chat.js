@@ -1,11 +1,14 @@
 import React from 'react';
+import { View, Platform, KeyboardAvoidingView } from 'react-native';
+import { getBottomSpace } from 'react-native-iphone-x-helper';
 import { GiftedChat, Bubble, InputToolbar } from 'react-native-gifted-chat';
 import 'react-native-gesture-handler';
-import { View, Platform, StyleSheet, KeyboardAvoidingView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
+import CustomActions from './CustomActions';
+import { ActionSheetProvider } from '@expo/react-native-action-sheet';
+import MapView from 'react-native-maps';
 
-// importing firebase
 const firebase = require('firebase');
 require('firebase/firestore');
 
@@ -20,62 +23,68 @@ export default class Chat extends React.Component {
         avatar: '',
         name: '',
       },
+      loggedInText: 'Please wait, you are getting logged in',
+      image: null,
+      location: null,
       isConnected: false,
     };
-    const firebaseConfig = {
-      apiKey: 'AIzaSyDaCR0OwT_Hf2WRj4PUabCi4iEghnJ-bS8',
-      authDomain: 'chatapp-30e5d.firebaseapp.com',
-      projectId: 'chatapp-30e5d',
-      storageBucket: 'chatapp-30e5d.appspot.com',
-      messagingSenderId: '57490362557',
-      appId: '1:57490362557:web:86d86546131560106e27d4'
-    };
-    // Initialize Firebase
+
     if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+      firebase.initializeApp({
+
+        apiKey: 'AIzaSyA4e38GK-CGpq2435u5q6VHZMXLJyB42hE',
+        authDomain: 'chatapp-1cfd3.firebaseapp.com',
+        projectId: 'chatapp-1cfd3',
+        storageBucket: 'chatapp-1cfd3.appspot.com',
+        messagingSenderId: '106433472658',
+        appId: '1:106433472658:web:536bc98147d23c7e6a1e4b',
+      });
     }
+
+    this.referenceChatMessages = firebase.firestore().collection('messages');
   }
 
-  //getMessages should be added before componentdidmount
   async getMessages() {
     let messages = '';
     try {
-      messages = await AsyncStorage.getItem('messages') || [];
+      messages = (await AsyncStorage.getItem('messages')) || [];
+      console.log('called set state for messages', messages);
       this.setState({
-        messages: JSON.parse(messages)
+        messages: JSON.parse(messages),
       });
     } catch (error) {
       console.log(error.message);
     }
-  };
+  }
 
   componentDidMount() {
-    // Set the name property to be included in the navigation bar
     let name = this.props.route.params.name;
     this.props.navigation.setOptions({ title: name });
     this.getMessages();
-    NetInfo.fetch().then(connection => {
+    NetInfo.fetch().then((connection) => {
       if (connection.isConnected) {
-        this.setState({ isConnected: true });
-        console.log('online');
+        this.setState({
+          isConnected: true,
+        });
       } else {
-        console.log('offline');
+        this.setState({
+          isConnected: false,
+        });
       }
     });
 
     this.referenceChatMessages = firebase.firestore().collection('messages');
-    this.unsubscribe = this.referenceChatMessages.onSnapshot(this.onCollectionUpdate);
-
     this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
       if (!user) {
         firebase.auth().signInAnonymously();
       }
       this.setState({
-        uid: user.uid,
+        uid: user?.uid,
         messages: [],
         user: {
-          _id: user.uid,
+          _id: user?.uid,
           name: name,
+          avatar: 'https://placeimg.com/140/140/any',
         },
       });
       this.unsubscribe = this.referenceChatMessages
@@ -84,19 +93,14 @@ export default class Chat extends React.Component {
     });
   }
 
-  componentWillUnmount() {
-    if (this.isConnected) {
-      this.unsubscribe();
-      this.authUnsubscribe();
-    }
-  }
-
   onSend(messages = []) {
-    this.setState((previousState) => ({
-      messages: GiftedChat.append(previousState.messages, messages),
-    }),
+    this.setState(
+      (previousState) => ({
+        messages: GiftedChat.append(previousState.messages, messages),
+      }),
       () => {
-        this.addMessage();
+        const message = messages[0];
+        this.addMessage(message);
         this.saveMessages();
       }
     );
@@ -104,9 +108,11 @@ export default class Chat extends React.Component {
 
   async saveMessages() {
     try {
-      await AsyncStorage.setItem('messages', JSON.stringify(this.state.messages));
-    }
-    catch (error) {
+      await AsyncStorage.setItem(
+        'messages',
+        JSON.stringify(this.state.messages)
+      );
+    } catch (error) {
       console.log(error.message);
     }
   }
@@ -115,53 +121,15 @@ export default class Chat extends React.Component {
     try {
       await AsyncStorage.removeItem('messages');
       this.setState({
-        messages: []
-      })
+        messages: [],
+      });
     } catch (error) {
       console.log(error.message);
     }
   }
 
-  addMessage = () => {
-    const message = this.state.messages[0];
-    this.referenceChatMessages.add({
-      uid: this.state.uid,
-      _id: message._id,
-      text: message.text || '',
-      createdAt: message.createdAt,
-      user: message.user,
-    });
-  };
-
-  //Allows bubble customization   
-  renderBubble(props) {
-    return (
-      <Bubble
-        {...props}
-        wrapperStyle={{
-          left: {
-            backgroundColor: 'white',
-          },
-          right: {
-            backgroundColor: 'blue'
-          },
-        }}
-      />
-    );
-  }
-
-  renderInputToolbar(props) {
-    if (this.state.isConnected == false) {
-    } else {
-      return (
-        <InputToolbar
-          {...props}
-        />
-      );
-    }
-  }
-
   onCollectionUpdate = (querySnapshot) => {
+    if (!this.state.isConnected) return;
     const messages = [];
     querySnapshot.forEach((doc) => {
       let data = doc.data();
@@ -174,6 +142,8 @@ export default class Chat extends React.Component {
           name: data.user.name,
           avatar: data.user.avatar || '',
         },
+        image: data.image || null,
+        location: data.location || null,
       });
     });
     this.setState({
@@ -181,39 +151,99 @@ export default class Chat extends React.Component {
     });
   };
 
-  render() {
-    let color = this.props.route.params.color;
+  addMessage(message) {
+    this.referenceChatMessages.add({
+      uid: this.state.uid,
+      _id: message._id,
+      createdAt: message.createdAt,
+      text: message.text || '',
+      user: this.state.user,
+      image: message.image || null,
+      location: message.location || null,
+    });
+  }
+
+  componentWillUnmount() {
+    this.authUnsubscribe();
+    this.unsubscribe();
+  }
+
+  renderInputToolbar(props) {
+    if (this.state.isConnected === false) {
+    } else {
+      return <InputToolbar {...props} />;
+    }
+  }
+
+  renderBubble(props) {
     return (
-      <View style={{ flex: 1, backgroundColor: color }} >
-        <GiftedChat
-          renderBubble={this.renderBubble.bind(this)}
-          messages={this.state.messages}
-          renderInputToolbar={this.renderInputToolbar.bind(this)}
-          onSend={(messages) => this.onSend(messages)}
-          user={{
-            _id: this.state.user._id,
-            avatar: 'https://placeimg.com/130/130/any',
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          left: {
+            backgroundColor: 'gray',
+          },
+          right: {
+            backgroundColor: 'blue',
+          },
+        }}
+      />
+    );
+  }
+
+  renderCustomActions = (props) => {
+    return <CustomActions {...props} />;
+  };
+
+  renderCustomView(props) {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{
+            width: 150,
+            height: 100,
+            borderRadius: 13,
+            margin: 3
+          }}
+          region={{
+            latitude: currentMessage.location.latitude,
+            longitude: currentMessage.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
           }}
         />
-        {Platform.OS === 'android' ? (
-          <KeyboardAvoidingView behavior='height' />
-        ) : null}
-      </View>
+      );
+    }
+    return null;
+  }
+
+  render() {
+
+    let color = this.props.route.params.color;
+    return (
+      <ActionSheetProvider>
+        <View style={{ flex: 1, backgroundColor: color }}>
+          <GiftedChat
+            // bottomOffset={getBottomSpace()}
+            renderBubble={this.renderBubble.bind(this)}
+            renderInputToolbar={this.renderInputToolbar.bind(this)}
+            messages={this.state.messages}
+            isConnected={this.state.isConnected}
+            onSend={(messages) => this.onSend(messages)}
+            user={{
+              _id: this.state.uid,
+              avatar: 'https://placeimg.com/140/140/any',
+
+            }}
+            renderActions={this.renderCustomActions}
+            renderCustomView={this.renderCustomView}
+          />
+          {Platform.OS === 'android' ? (
+            <KeyboardAvoidingView behavior='height' />
+          ) : null}
+        </View>
+      </ActionSheetProvider>
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingTop: 40,
-  },
-  item: {
-    fontSize: 20,
-    color: 'blue',
-  },
-  text: {
-    fontSize: 30,
-  }
-});
